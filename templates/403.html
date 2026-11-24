@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Access Denied{% endblock %}
+{% block content %}
+<section class="card error-shell">
+    <div class="error-code">403</div>
+    <h2>Access denied</h2>
+    <p class="muted">Aapke current account role ko is page ka permission access nahi mila. Session aur route protection abhi bhi active hai.</p>
+    <div class="error-grid">
+        <div class="note-card">
+            <strong>Why this happened</strong>
+            <p class="muted">Aapne aisa route open kiya jo kisi aur role ke dashboard ya action ke liye protected hai.</p>
+        </div>
+        <div class="note-card">
+            <strong>What to do next</strong>
+            <p class="muted">Home ya login par wapas jaiye aur apne assigned portal se dubara continue kijiye.</p>
+        </div>
+    </div>
+    <div class="action-row">
+        <a class="button-link" href="{{ url_for('index') }}">Go Home</a>
+        <a class="button-link secondary" href="{{ url_for('auth.login') }}">Login</a>
+    </div>
+</section>
+{% endblock %}

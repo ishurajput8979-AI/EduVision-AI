@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Student Signup{% endblock %}
+{% block content %}
+<section class="hero hero-split">
+    <div class="hero-copy">
+        <p class="eyebrow">Fresh Enrollment</p>
+        <h2>Create your student account</h2>
+        <p class="muted">Complete ERP signup once, upload face samples, and unlock attendance analytics with your student portal account.</p>
+    </div>
+    <div class="hero-panel">
+        <h3>Before you start</h3>
+        <ul class="list-clean">
+            <li>Use the ERP ID already created by admin.</li>
+            <li>Keep 10 to 15 clear face photos ready.</li>
+            <li>Upload one short enrollment video for better sample extraction.</li>
+        </ul>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Student ERP Signup</h2>
+    <p class="muted">The system stores fresh embeddings only from valid face samples and links them to your ERP record.</p>
+    <p class="muted">Password rule: {{ password_policy_hint }}</p>
+    <p class="muted">Examples: {{ password_examples[0] }}, {{ password_examples[1] }}</p>
+    <form method="post" action="{{ url_for('signup.student_signup') }}" enctype="multipart/form-data" class="grid-form">
+        <label>ERP ID
+            <input type="text" name="erp_id" value="{{ erp_id or '' }}" placeholder="ERP001" required>
+        </label>
+        <label>Password
+            <input type="password" name="password" value="" minlength="{{ password_min_length }}" placeholder="{{ password_examples[1] }}" title="{{ password_policy_hint }}" required>
+        </label>
+        <label>Email
+            <input type="email" name="email" value="{{ email or '' }}" placeholder="student@example.com">
+        </label>
+        <label>Phone
+            <input type="text" name="phone" value="{{ phone or '' }}" placeholder="9876543210">
+        </label>
+        <label>Photos
+            <input type="file" name="photos" accept=".jpg,.jpeg,.png" multiple required>
+        </label>
+        <label>Enrollment Video
+            <input type="file" name="video" accept=".mp4,.avi,.mov,.mkv" required>
+        </label>
+        <button type="submit">Create Student Account</button>
+    </form>
+    <div class="note-grid">
+        <div class="note-card">
+            <strong>Photo Tip</strong>
+            <p class="muted">Use clear front-facing images with different angles and good lighting.</p>
+        </div>
+        <div class="note-card">
+            <strong>Video Tip</strong>
+            <p class="muted">Record a short clip with small head movement so frame extraction gets better samples.</p>
+        </div>
+    </div>
+    <div class="action-row">
+        <a class="button-link secondary" href="{{ url_for('auth.login', role='student') }}">Back to Student Login</a>
+        <a class="button-link secondary" href="{{ url_for('auth.forgot_password') }}">Forgot Password</a>
+    </div>
+</section>
+{% endblock %}

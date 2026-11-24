@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+{% block content %}
+<section class="hero hero-split">
+    <div class="hero-copy">
+        <p class="eyebrow">Teacher Console</p>
+        <h2>{{ data.teacher.name }} ka attendance workspace</h2>
+        <p class="muted">{{ data.teacher.department }} department ke liye live attendance, upload-based processing, and assignment analytics yahin connected hain.</p>
+        <div class="action-row">
+            <a class="button-link" href="#live-attendance-window">Live Attendance</a>
+            <a class="button-link secondary" href="#capture-attendance">Capture Attendance</a>
+            <a class="button-link secondary" href="#teacher-assignments">Assignments</a>
+        </div>
+    </div>
+
+    <div class="hero-panel">
+        <span class="pill success">{{ data.live_schedule.current_day }}</span>
+        <h3>Today's teaching status</h3>
+        <div class="note-grid compact-grid">
+            <div class="note-card">
+                <strong>{{ data.live_schedule.current_time }}</strong>
+                <p class="muted">Current system time</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ data.live_schedule.today_slots|length }}</strong>
+                <p class="muted">Total slots today</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ data.live_schedule.active_slots|length }}</strong>
+                <p class="muted">Active live windows</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ data.live_schedule.upcoming_slots|length }}</strong>
+                <p class="muted">Upcoming classes</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="metrics">
+    <div class="metric">
+        <span class="metric-label">Assignments</span>
+        <strong>{{ data.metrics.assignment_count }}</strong>
+    </div>
+    <div class="metric info">
+        <span class="metric-label">Live Classes</span>
+        <strong>{{ data.metrics.active_class_count }}</strong>
+    </div>
+    <div class="metric success">
+        <span class="metric-label">Average Attendance</span>
+        <strong>{{ data.metrics.average_attendance }}%</strong>
+    </div>
+    <div class="metric">
+        <span class="metric-label">Students Covered</span>
+        <strong>{{ data.metrics.student_count }}</strong>
+    </div>
+    <div class="metric warning">
+        <span class="metric-label">Today's Slots</span>
+        <strong>{{ data.live_schedule.today_slots|length }}</strong>
+    </div>
+</section>
+
+<section class="grid-two">
+    <div class="card">
+        <h2>Assignment Attendance Graph</h2>
+        {% if data.charts.assignment_averages %}
+        <div class="chart-shell">
+            <canvas id="teacherAttendanceChart"></canvas>
+        </div>
+        {% else %}
+        <p class="muted">Graph tab show hoga jab teacher assignments aur attendance records available honge.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Workflow Notes</h2>
+        <div class="note-grid compact-grid">
+            <div class="note-card">
+                <strong>Upload Mode</strong>
+                <p class="muted">Class photo ya video process karke attendance mark ki ja sakti hai.</p>
+            </div>
+            <div class="note-card">
+                <strong>Live Mode</strong>
+                <p class="muted">Active timetable slot se direct live attendance route trigger hota hai.</p>
+            </div>
+            <div class="note-card">
+                <strong>Manual Override</strong>
+                <p class="muted">Missed students ke ERP IDs manual present field me add kar sakte hain.</p>
+            </div>
+            <div class="note-card">
+                <strong>Liveness Check</strong>
+                <p class="muted">Recognition flow movement and blink-based confidence ko bhi account karta hai.</p>
+            </div>
+        </div>
+        {% if data.live_schedule.calendar_notice %}
+        <div class="progress-card">
+            <strong>Calendar Notice</strong>
+            <p class="muted">{{ data.live_schedule.calendar_notice }}</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="card" id="live-attendance-window">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Live Attendance Window</p>
+            <h2>Current and upcoming classes</h2>
+        </div>
+        <p class="muted">Today is <strong>{{ data.live_schedule.current_day }}</strong> and current time is <strong>{{ data.live_schedule.current_time }}</strong>.</p>
+    </div>
+
+    {% if data.live_schedule.active_slots %}
+    <div class="grid-two">
+        {% for slot in data.live_schedule.active_slots %}
+        <div class="card nested-card">
+            <h3>{{ slot.subject_name }} ({{ slot.subject_code }})</h3>
+            <p class="muted">{{ slot.course }} | {{ slot.branch }} | Year {{ slot.year }} | Semester {{ slot.semester }} | Section {{ slot.section }}</p>
+            <p><strong>Time:</strong> {{ slot.start_time }} to {{ slot.end_time }}</p>
+            <p><strong>Room:</strong> {{ slot.room_no or 'Not Set' }}</p>
+            {% if slot.is_substitute %}
+            <p><span class="pill warning">Substitute Class</span> for {{ slot.original_teacher_name }}</p>
+            {% endif %}
+            {% if slot.assignment_id %}
+            <form method="post" action="{{ url_for('teacher.live_attendance') }}" class="inline-form">
+                <input type="hidden" name="assignment_id" value="{{ slot.assignment_id }}">
+                <input type="hidden" name="attendance_date" value="">
+                <button type="submit">Start Live Attendance</button>
+            </form>
+            {% else %}
+            <p class="muted">Assignment mapping missing. Ask admin to assign this subject.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted">Abhi koi active class slot nahi hai. Neeche today's timetable aur manual attendance tools available hain.</p>
+    {% endif %}
+
+    {% if data.live_schedule.upcoming_slots %}
+    <h3>Upcoming Today</h3>
+    <div class="table-shell">
+        <table>
+            <tr><th>Subject</th><th>Section</th><th>Time</th><th>Status</th></tr>
+            {% for slot in data.live_schedule.upcoming_slots %}
+            <tr>
+                <td>{{ slot.subject_name }} ({{ slot.subject_code }})</td>
+                <td>{{ slot.section }}</td>
+                <td>{{ slot.start_time }} to {{ slot.end_time }}</td>
+                <td><span class="pill {% if slot.is_substitute %}warning{% endif %}">{{ 'Substitute Upcoming' if slot.is_substitute else 'Upcoming' }}</span></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+</section>
+
+<section class="card" id="capture-attendance">
+    <h2>Capture Attendance</h2>
+    <p class="muted">Upload a group image or video. If a student is missed, add ERP IDs in the manual override box.</p>
+    {% if data.assignments %}
+    <form method="post" action="{{ url_for('teacher.dashboard') }}" enctype="multipart/form-data" class="grid-form">
+        <label>Subject Assignment
+            <select name="assignment_id">
+                {% for assignment in data.assignments %}
+                <option value="{{ assignment.id }}">
+                    {{ assignment.subject_name }} ({{ assignment.subject_code }}) - {{ assignment.section }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Date<input type="date" name="attendance_date"></label>
+        <label>Group Photo / Video<input type="file" name="media" accept=".jpg,.jpeg,.png,.mp4,.avi,.mov,.mkv"></label>
+        <label>Manual Present ERP IDs<input type="text" name="manual_present" placeholder="ERP001, ERP002"></label>
+        <button type="submit">Process Attendance</button>
+    </form>
+    <p class="muted">Agar active timetable slot available ho to upar live attendance se direct camera workflow start kar sakte hain.</p>
+    {% else %}
+    <p class="muted">No subject assignments are mapped to this teacher yet, isliye attendance capture abhi unavailable hai.</p>
+    {% endif %}
+</section>
+
+{% if result %}
+<section class="card">
+    <h2>Last Attendance Result</h2>
+    <p><strong>{{ result.subject_name }}</strong> on {{ result.attendance_date }}</p>
+    <p>Present: {{ result.present_count }} | Absent: {{ result.absent_count }} | Unknown faces: {{ result.unknown_faces }}</p>
+    <div class="grid-two">
+        <div>
+            <h3>Recognized / Present Students</h3>
+            <div class="table-shell">
+                <table>
+                    <tr><th>ERP</th><th>Name</th><th>Distance</th></tr>
+                    {% for student in result.recognized_students %}
+                    <tr>
+                        <td>{{ student.erp_id }}</td>
+                        <td>{{ student.name }}</td>
+                        <td>{{ "%.3f"|format(result.recognized_distances.get(student.erp_id, 0)) if result.recognized_distances.get(student.erp_id) is not none else 'Manual' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="muted">No recognized students in the last processed result.</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        <div>
+            <h3>Absent Students</h3>
+            <div class="table-shell">
+                <table>
+                    <tr><th>ERP</th><th>Name</th></tr>
+                    {% for student in result.absent_students %}
+                    <tr><td>{{ student.erp_id }}</td><td>{{ student.name }}</td></tr>
+                    {% else %}
+                    <tr><td colspan="2" class="muted">No absent students in the last processed result.</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+    {% if result.liveness %}
+    <div class="table-shell">
+        <table>
+            <tr><th>ERP</th><th>Liveness Score</th><th>Status</th><th>Reason</th></tr>
+            {% for erp_id, detail in result.liveness.items() %}
+            <tr>
+                <td>{{ erp_id }}</td>
+                <td>{{ (detail.liveness_score * 100)|round(1) if detail.liveness_score is defined else 0 }}%</td>
+                <td>
+                    {% if detail.is_likely_live %}
+                    <span class="pill success">Live</span>
+                    {% else %}
+                    <span class="pill warning">Retry Capture</span>
+                    {% endif %}
+                </td>
+                <td>{{ detail.recommendation or (detail.reasons|join(', ')) }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+<section class="grid-two">
+    <div class="card" id="today-schedule">
+        <h2>Today Timetable</h2>
+        {% if data.live_schedule.today_slots %}
+        <div class="table-shell">
+            <table>
+                <tr><th>Subject</th><th>Section</th><th>Time</th><th>Room</th><th>Status</th></tr>
+                {% for slot in data.live_schedule.today_slots %}
+                <tr>
+                    <td>{{ slot.subject_name }} ({{ slot.subject_code }})</td>
+                    <td>{{ slot.section }}</td>
+                    <td>{{ slot.start_time }} to {{ slot.end_time }}</td>
+                    <td>{{ slot.room_no or 'Not Set' }}</td>
+                    <td>
+                        {% if slot.is_active %}
+                        <span class="pill success">Live Now</span>
+                        {% elif slot.is_upcoming %}
+                        <span class="pill warning">Upcoming</span>
+                        {% else %}
+                        <span class="pill">Completed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% else %}
+        <p class="muted">Aaj ke liye koi timetable entry nahi mili.</p>
+        {% endif %}
+    </div>
+
+    <div class="card" id="teacher-assignments">
+        <h2>Your Subject Assignments</h2>
+        {% for assignment in data.assignments %}
+        <div class="progress-card">
+            <div class="progress-copy">
+                <span>{{ assignment.subject_name }} ({{ assignment.subject_code }})</span>
+                <strong>Section {{ assignment.section }}</strong>
+            </div>
+            <p class="muted">{{ assignment.course }} | {{ assignment.branch }} | Year {{ assignment.year }} | Semester {{ assignment.semester }}</p>
+            {% if assignment.assignment_source == 'substitute' %}
+            <p><span class="pill warning">One-Day Substitute for {{ assignment.original_teacher_name }}</span></p>
+            {% endif %}
+            <div class="table-shell">
+                <table>
+                    <tr><th>Roll</th><th>Name</th><th>ERP</th><th>Attendance %</th></tr>
+                    {% for student in data.summaries[assignment.id] %}
+                    <tr>
+                        <td>{{ student.roll_no }}</td>
+                        <td>{{ student.name }}</td>
+                        <td>{{ student.student_erp }}</td>
+                        <td>{{ student.percentage }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="muted">No roster mapped yet.</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <p class="muted">No subject assignments are mapped to this teacher yet.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+const teacherLabels = {{ data.charts.assignment_averages | map(attribute='label') | list | tojson }};
+const teacherValues = {{ data.charts.assignment_averages | map(attribute='value') | list | tojson }};
+
+if (typeof Chart !== 'undefined' && document.getElementById('teacherAttendanceChart')) {
+    new Chart(document.getElementById('teacherAttendanceChart'), {
+        type: 'line',
+        data: {
+            labels: teacherLabels,
+            datasets: [{
+                label: 'Average Attendance %',
+                data: teacherValues,
+                borderColor: '#0f766e',
+                backgroundColor: 'rgba(15, 118, 110, 0.16)',
+                fill: true,
+                tension: 0.35
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, max: 100 } }
+        }
+    });
+}
+</script>
+{% endblock %}

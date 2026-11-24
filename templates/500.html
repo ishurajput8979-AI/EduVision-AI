@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Server Error{% endblock %}
+{% block content %}
+<section class="card error-shell">
+    <div class="error-code">500</div>
+    <h2>Something went wrong</h2>
+    <p class="muted">Server side issue ki wajah se requested UI load nahi ho saki. Backend protection aur routes unchanged hain, lekin current request complete nahi ho paayi.</p>
+    <div class="error-grid">
+        <div class="note-card">
+            <strong>Recommended next step</strong>
+            <p class="muted">Same action ko thodi der baad dubara try karein ya home se correct portal reopen karein.</p>
+        </div>
+        <div class="note-card">
+            <strong>Safe recovery</strong>
+            <p class="muted">Login aur dashboard links active hain, so aap known workflow se restart kar sakte hain.</p>
+        </div>
+    </div>
+    <div class="action-row">
+        <a class="button-link" href="{{ url_for('index') }}">Go Home</a>
+        <a class="button-link secondary" href="{{ url_for('auth.login') }}">Login</a>
+    </div>
+</section>
+{% endblock %}

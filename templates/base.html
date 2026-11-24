@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}EduVision AI{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='eduvision.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    {% set current_role = session.get('role') %}
+    {% if current_role == 'admin' %}
+        {% set dashboard_href = url_for('admin.dashboard') %}
+        {% set dashboard_label = 'Admin Dashboard' %}
+    {% elif current_role == 'teacher' %}
+        {% set dashboard_href = url_for('teacher.dashboard') %}
+        {% set dashboard_label = 'Teacher Dashboard' %}
+    {% elif current_role == 'hod' %}
+        {% set dashboard_href = url_for('hod.dashboard') %}
+        {% set dashboard_label = 'HOD Dashboard' %}
+    {% elif current_role == 'student' %}
+        {% set dashboard_href = url_for('student.dashboard') %}
+        {% set dashboard_label = 'Student Dashboard' %}
+    {% else %}
+        {% set dashboard_href = None %}
+        {% set dashboard_label = 'Dashboard' %}
+    {% endif %}
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand-block brand-link" href="{{ url_for('index') }}">
+                <span class="brand-stack">
+                    <img class="brand-banner" src="{{ url_for('static', filename='eduvision-ai-banner.png') }}" alt="EduVision AI logo">
+                    <span class="brand-subtext">Face-enabled attendance and real-time academic intelligence for every portal.</span>
+                </span>
+            </a>
+
+            <div class="topbar-actions">
+                <nav class="nav">
+                    <a href="{{ url_for('index') }}">Home</a>
+                    {% if dashboard_href %}
+                    <a href="{{ dashboard_href }}">{{ dashboard_label }}</a>
+                    <a href="{{ url_for('auth.academic_calendar') }}">Academic Calendar</a>
+                    <a class="nav-link-secondary" href="{{ url_for('auth.account_settings') }}">Settings</a>
+                    <span class="nav-role">{{ current_role|upper ~ ' Portal' }}</span>
+                    <a class="nav-link-ghost nav-logout" href="{{ url_for('auth.logout') }}">Logout</a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}">Login</a>
+                    <a class="nav-link-secondary" href="{{ url_for('signup.student_signup') }}">Student Signup</a>
+                    <a class="nav-link-ghost" href="{{ url_for('auth.forgot_password') }}">Forgot Password</a>
+                    <span class="nav-role">Public Portal</span>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="page" id="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <section class="flash-list">
+            {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </section>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

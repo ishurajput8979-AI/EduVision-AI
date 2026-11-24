@@ -1,0 +1,10 @@
+twilio.env
+.env
+.env.*
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+dataset/
+models/
+.vscode/

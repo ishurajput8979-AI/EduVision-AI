@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block title %}HOD Dashboard{% endblock %}
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+{% block content %}
+<section class="hero hero-split">
+    <div class="hero-copy">
+        <p class="eyebrow">Department Overview</p>
+        <h2>{{ teacher.department }} attendance risk command center</h2>
+        <p class="muted">Track department-wide attendance performance, identify high-risk students, and trigger manual intervention actions from one HOD dashboard.</p>
+        <div class="action-row">
+            <a class="button-link" href="#department-risk-table">Risk Table</a>
+            <a class="button-link secondary" href="#overall-attendance-table">Overall Attendance</a>
+            <a class="button-link secondary" href="#hod-alert-center">Alert Center</a>
+        </div>
+    </div>
+
+    <div class="hero-panel">
+        <span class="pill {% if sms_status.configured %}success{% else %}warning{% endif %}">{{ 'SMS Ready' if sms_status.configured else 'SMS Not Configured' }}</span>
+        <h3>HOD profile and alert status</h3>
+        <div class="note-grid compact-grid">
+            <div class="note-card">
+                <strong>{{ teacher.name }}</strong>
+                <p class="muted">Department head</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ overview.total_students }}</strong>
+                <p class="muted">Students tracked</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ sms_status.sender or 'Unavailable' }}</strong>
+                <p class="muted">Configured sender</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ overview.today_schedule.active_count }}</strong>
+                <p class="muted">Department classes live now</p>
+            </div>
+        </div>
+        <p class="muted">{{ sms_status.trial_notice }}</p>
+    </div>
+</section>
+
+<section class="metrics">
+    <div class="metric">
+        <span class="metric-label">Department Head</span>
+        <strong>{{ teacher.name }}</strong>
+    </div>
+    <div class="metric">
+        <span class="metric-label">Department</span>
+        <strong>{{ teacher.department }}</strong>
+    </div>
+    <div class="metric info">
+        <span class="metric-label">Students</span>
+        <strong>{{ overview.total_students }}</strong>
+    </div>
+    <div class="metric">
+        <span class="metric-label">Teachers</span>
+        <strong>{{ overview.total_teachers }}</strong>
+    </div>
+    <div class="metric danger">
+        <span class="metric-label">High Risk</span>
+        <strong>{{ overview.high_risk_count }}</strong>
+    </div>
+    <div class="metric warning">
+        <span class="metric-label">Medium Risk</span>
+        <strong>{{ overview.medium_risk_count }}</strong>
+    </div>
+</section>
+
+<section class="grid-two">
+    <div class="card">
+        <h2>Risk Distribution</h2>
+        {% if overview.risks %}
+        <div class="chart-shell">
+            <canvas id="hodRiskChart"></canvas>
+        </div>
+        {% else %}
+        <p class="muted">Risk distribution chart attendance records aane ke baad yahan dikhai dega.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Overall Attendance Snapshot</h2>
+        <div class="progress-card">
+            <div class="progress-copy">
+                <span>High-risk share</span>
+                <strong>{{ ((overview.high_risk_count / (overview.total_students or 1)) * 100)|round(1) if overview.total_students else 0 }}%</strong>
+            </div>
+            <div class="progress">
+                <div class="progress-bar risk-bar danger" style="width: {{ ((overview.high_risk_count / (overview.total_students or 1)) * 100)|round(1) if overview.total_students else 0 }}%"></div>
+            </div>
+        </div>
+        <div class="progress-card">
+            <div class="progress-copy">
+                <span>Below-threshold students</span>
+                <strong>{{ overall_attendance | selectattr('is_below_threshold') | list | length }}</strong>
+            </div>
+            <p class="muted">Students currently under their required attendance threshold across the department.</p>
+        </div>
+        {% if overview.today_schedule.calendar_notice %}
+        <div class="progress-card">
+            <strong>Calendar Notice</strong>
+            <p class="muted">{{ overview.today_schedule.calendar_notice }}</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="card" id="hod-alert-center">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">HOD Alert Center</p>
+            <h2>Manual intervention tools</h2>
+        </div>
+        <p class="muted">Use one-student alerts or bulk low-attendance alerts without changing the existing backend logic.</p>
+    </div>
+
+    <div class="grid-two">
+        <div class="card nested-card">
+            <h3>Send Manual Alert to One Student</h3>
+            <form method="post" action="{{ url_for('hod.send_alert') }}" class="grid-form">
+                <label>Student ERP ID
+                    <input type="text" name="student_erp" placeholder="ERP001" required>
+                </label>
+                <label>Message Mode
+                    <select name="message_mode">
+                        <option value="default" {% if alert_form.message_mode == 'default' %}selected{% endif %}>Default Template</option>
+                        <option value="custom" {% if alert_form.message_mode == 'custom' %}selected{% endif %}>Custom Template</option>
+                    </select>
+                </label>
+                <label class="span-full">Custom Message
+                    <textarea name="custom_message" rows="4" placeholder="Use placeholders like {student_name}, {attendance_percentage}, {required_classes}.">{{ alert_form.custom_message }}</textarea>
+                </label>
+                <button type="submit">Send Alert to Student</button>
+            </form>
+        </div>
+
+        <div class="card nested-card">
+            <h3>Bulk Low-Attendance Alert</h3>
+            <p class="muted">This action targets all students in your department whose attendance is currently below the required threshold.</p>
+            <form method="post" action="{{ url_for('hod.manual_alert_all') }}" class="grid-form">
+                <label>Message Mode
+                    <select name="message_mode">
+                        <option value="default" {% if alert_form.message_mode == 'default' %}selected{% endif %}>Default Template</option>
+                        <option value="custom" {% if alert_form.message_mode == 'custom' %}selected{% endif %}>Custom Template</option>
+                    </select>
+                </label>
+                <label class="span-full">Custom Message
+                    <textarea name="custom_message" rows="4" placeholder="Optional custom SMS template for all low attendance students.">{{ alert_form.custom_message }}</textarea>
+                </label>
+                <button type="submit">Send Alert to All Low Attendance Students</button>
+            </form>
+            <div class="note-grid compact-grid">
+                <div class="note-card">
+                    <strong>Configured</strong>
+                    <p class="muted">{{ 'Yes' if sms_status.configured else 'No' }}</p>
+                </div>
+                <div class="note-card">
+                    <strong>Trial Mode</strong>
+                    <p class="muted">{{ sms_status.trial_notice }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="card" id="department-risk-table">
+    <h2>Department Risk Table</h2>
+    <div class="table-shell">
+        <table>
+            <tr><th>ERP</th><th>Name</th><th>Section</th><th>Attendance %</th><th>Required %</th><th>Risk</th><th>Weakest Subject</th><th>Required Classes</th></tr>
+            {% for student in overview.risks %}
+            <tr>
+                <td>{{ student.student_erp }}</td>
+                <td>{{ student.name }}</td>
+                <td>{{ student.section }}</td>
+                <td>{{ student.percentage }}</td>
+                <td>{{ student.min_attendance }}</td>
+                <td>
+                    <span class="pill {% if student.risk_level == 'High' %}danger{% elif student.risk_level == 'Medium' %}warning{% elif student.risk_level == 'Low' %}success{% endif %}">
+                        {{ student.risk_level }}
+                    </span>
+                </td>
+                <td>{{ student.weakest_subject_code or 'N/A' }}</td>
+                <td>{{ student.required_classes }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="muted">No department risks available yet.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+</section>
+
+<section class="grid-two">
+    <div class="card">
+        <h2>Section Snapshot</h2>
+        <div class="table-shell">
+            <table>
+                <tr><th>Section</th><th>Students</th><th>Average Attendance</th><th>High Risk</th><th>Medium Risk</th></tr>
+                {% for section in overview.section_snapshots %}
+                <tr>
+                    <td>{{ section.label }}</td>
+                    <td>{{ section.student_count }}</td>
+                    <td>{{ section.average_attendance }}%</td>
+                    <td>{{ section.high_risk_count }}</td>
+                    <td>{{ section.medium_risk_count }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="muted">No section snapshot available yet.</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <div class="card" id="overall-attendance-table">
+        <h2>Overall Attendance</h2>
+        <div class="table-shell">
+            <table>
+                <tr><th>ERP</th><th>Name</th><th>Attendance %</th><th>Present / Total</th><th>Required Classes</th><th>Status</th></tr>
+                {% for student in overall_attendance %}
+                <tr>
+                    <td>{{ student.erp_id }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.percentage }}</td>
+                    <td>{{ student.present_classes }} / {{ student.total_classes }}</td>
+                    <td>{{ student.required_classes }}</td>
+                    <td>
+                        {% if student.is_below_threshold %}
+                        <span class="pill warning">Low Attendance</span>
+                        {% else %}
+                        <span class="pill success">On Track</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="muted">No overall attendance rows available yet.</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Today's Department Schedule</h2>
+    {% if overview.today_schedule.rows %}
+    <div class="table-shell">
+        <table>
+            <tr><th>Subject</th><th>Teacher</th><th>Section</th><th>Time</th><th>Room</th><th>Status</th></tr>
+            {% for row in overview.today_schedule.rows %}
+            <tr>
+                <td>{{ row.subject_name }} ({{ row.subject_code }})</td>
+                <td>{{ row.teacher_name }}</td>
+                <td>{{ row.section }}</td>
+                <td>{{ row.start_time }} to {{ row.end_time }}</td>
+                <td>{{ row.room_no or '-' }}</td>
+                <td><span class="pill {% if row.status == 'Live Now' %}success{% elif row.status == 'Upcoming' %}warning{% endif %}">{{ row.status }}</span></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% else %}
+    <p class="muted">Aaj department ke liye koi visible timetable row available nahi hai.</p>
+    {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+if (typeof Chart !== 'undefined' && document.getElementById('hodRiskChart')) {
+    new Chart(document.getElementById('hodRiskChart'), {
+        type: 'bar',
+        data: {
+            labels: ['High', 'Medium', 'Low', 'No Data'],
+            datasets: [{
+                label: 'Students',
+                data: [{{ overview.high_risk_count }}, {{ overview.medium_risk_count }}, {{ overview.low_risk_count }}, {{ overview.no_data_count }}],
+                backgroundColor: ['#c14438', '#b86b1f', '#177245', '#6b7f8d'],
+                borderRadius: 12
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, precision: 0 } }
+        }
+    });
+}
+</script>
+{% endblock %}

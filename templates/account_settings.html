@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Account Settings{% endblock %}
+{% block content %}
+<section class="hero compact">
+    <div>
+        <p class="eyebrow">Account Settings</p>
+        <h2>Keep your recovery details current</h2>
+        <p class="muted">Update email/phone for OTP recovery and rotate your password whenever needed.</p>
+    </div>
+</section>
+
+<section class="grid-two">
+    <div class="card">
+        <h2>Contact Details</h2>
+        <form method="post" action="{{ url_for('auth.account_settings') }}" class="grid-form">
+            <input type="hidden" name="action" value="update_contact">
+            <label>Username
+                <input type="text" value="{{ user.username }}" disabled>
+            </label>
+            <label>Email
+                <input type="email" name="email" value="{{ user.email or '' }}">
+            </label>
+            <label>Phone
+                <input type="text" name="phone" value="{{ user.phone or '' }}">
+            </label>
+            <button type="submit">Update Contact</button>
+        </form>
+        <p class="muted">Forgot-password OTP will use the saved email or phone.</p>
+    </div>
+
+    <div class="card">
+        <h2>Change Password</h2>
+        <p class="muted">Password rule: {{ password_policy_hint }}</p>
+        <p class="muted">Examples: {{ password_examples[0] }}, {{ password_examples[2] }}</p>
+        <form method="post" action="{{ url_for('auth.account_settings') }}" class="grid-form">
+            <input type="hidden" name="action" value="change_password">
+            <label>Current Password
+                <input type="password" name="current_password" required>
+            </label>
+            <label>New Password
+                <input type="password" name="new_password" minlength="{{ password_min_length }}" placeholder="{{ password_examples[2] }}" title="{{ password_policy_hint }}" required>
+            </label>
+            <label>Confirm Password
+                <input type="password" name="confirm_password" required>
+            </label>
+            <button type="submit">Change Password</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

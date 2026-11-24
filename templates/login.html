@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Login | EduVision AI{% endblock %}
+{% block content %}
+{% set portal_ns = namespace(active=None) %}
+{% for portal in role_portals %}
+    {% if portal.key == selected_role %}
+        {% set portal_ns.active = portal %}
+    {% endif %}
+{% endfor %}
+
+<section class="hero hero-split">
+    <div class="hero-copy">
+        <p class="eyebrow">Secure Access Grid</p>
+        <h2>{{ portal_ns.active.label ~ ' Portal Login' if portal_ns.active else 'Access the EduVision AI control portal' }}</h2>
+        <p class="muted">
+            {% if portal_ns.active %}
+            {{ portal_ns.active.tagline }}
+            {% else %}
+            Sign in with your assigned account and EduVision AI will route you to the correct dashboard after authentication.
+            {% endif %}
+        </p>
+        <div class="action-row">
+            <a class="button-link secondary" href="{{ url_for('signup.student_signup') }}">Student Signup</a>
+            <a class="button-link secondary" href="{{ url_for('auth.forgot_password') }}">Forgot Password</a>
+        </div>
+    </div>
+
+    <div class="hero-panel">
+        <span class="pill info">{{ portal_ns.active.label if portal_ns.active else 'All Roles' }}</span>
+        <h3>Available login portals</h3>
+        <div class="portal-mini-grid">
+            {% for portal in role_portals %}
+            <a class="portal-mini {% if portal.key == selected_role %}is-active{% endif %}" href="{{ url_for('auth.login', role=portal.key) }}">
+                <strong>{{ portal.label }}</strong>
+                <span>{{ portal.tagline }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="card narrow auth-card">
+    <h2>{{ portal_ns.active.label ~ ' Sign In' if portal_ns.active else 'Role-Based Login' }}</h2>
+    <p class="muted">Admin, teacher, HOD, and student accounts all use the same secure EduVision AI gateway and then redirect to their own dashboards.</p>
+    <form method="post" action="{{ url_for('auth.login', role=selected_role) if selected_role else url_for('auth.login') }}" class="grid-form auth-form">
+        <input type="hidden" name="expected_role" value="{{ selected_role or '' }}">
+        <label>Username
+            <input type="text" name="username" value="{{ username or '' }}" placeholder="admin, teacher code, or ERP ID" required>
+        </label>
+        <label>Password
+            <input type="password" name="password" placeholder="Enter your password" required>
+        </label>
+        <button type="submit">{{ 'Continue to ' ~ portal_ns.active.label if portal_ns.active else 'Login' }}</button>
+    </form>
+    <div class="note-grid compact-grid">
+        <div class="note-card">
+            <strong>Admin</strong>
+            <p class="muted">Redirects to the admin control dashboard for setup and data management.</p>
+        </div>
+        <div class="note-card">
+            <strong>Teacher</strong>
+            <p class="muted">Redirects to live attendance, upload capture, and class analytics.</p>
+        </div>
+        <div class="note-card">
+            <strong>HOD</strong>
+            <p class="muted">Redirects to department risk monitoring and manual alert tools.</p>
+        </div>
+        <div class="note-card">
+            <strong>Student</strong>
+            <p class="muted">Redirects to attendance analytics, alerts, and risk overview.</p>
+        </div>
+    </div>
+    <p class="muted">Students should complete ERP-based signup and face enrollment before the first portal login.</p>
+</section>
+{% endblock %}

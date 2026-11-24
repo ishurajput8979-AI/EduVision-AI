@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found{% endblock %}
+{% block content %}
+<section class="card error-shell">
+    <div class="error-code">404</div>
+    <h2>Page not found</h2>
+    <p class="muted">Requested route ya template yahan available nahi mila. Public pages aur protected dashboards ke valid entry points neeche diye gaye hain.</p>
+    <div class="error-grid">
+        <div class="note-card">
+            <strong>Start again</strong>
+            <p class="muted">Home page se correct portal choose karke login flow restart kar sakte hain.</p>
+        </div>
+        <div class="note-card">
+            <strong>Student setup</strong>
+            <p class="muted">Agar naya student account banana hai to direct ERP signup flow use kijiye.</p>
+        </div>
+    </div>
+    <div class="action-row">
+        <a class="button-link" href="{{ url_for('index') }}">Go Home</a>
+        <a class="button-link secondary" href="{{ url_for('auth.login') }}">Login</a>
+        <a class="button-link secondary" href="{{ url_for('signup.student_signup') }}">Signup</a>
+    </div>
+</section>
+{% endblock %}

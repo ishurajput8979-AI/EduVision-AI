@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+{% block content %}
+<section class="hero hero-split">
+    <div class="hero-copy">
+        <p class="eyebrow">Student Overview</p>
+        <h2>{{ student.name }}</h2>
+        <p class="muted">{{ student.course }} | {{ student.branch }} | Year {{ student.year }} | Semester {{ student.semester }} | Section {{ student.section }}</p>
+        <div class="action-row">
+            <a class="button-link" href="#subject-attendance">Subject Attendance</a>
+            <a class="button-link secondary" href="#student-alerts">Alerts</a>
+            <a class="button-link secondary" href="{{ url_for('auth.account_settings') }}">Account Settings</a>
+        </div>
+    </div>
+
+    <div class="hero-panel">
+        <span class="pill {% if risk_prediction.label == 'High' %}danger{% elif risk_prediction.label == 'Medium' %}warning{% else %}success{% endif %}">{{ risk_prediction.label }} Risk</span>
+        <h3>Attendance health summary</h3>
+        <div class="note-grid compact-grid">
+            <div class="note-card">
+                <strong>{{ analytics.attendance_overview.min_attendance }}%</strong>
+                <p class="muted">Required threshold</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ analytics.attendance_overview.required_classes }}</strong>
+                <p class="muted">Classes needed to recover</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ analytics.attendance_overview.total_scheduled_classes }}</strong>
+                <p class="muted">Scheduled classes counted</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ analytics.attendance_overview.weakest_subject.subject_code if analytics.attendance_overview.weakest_subject else 'N/A' }}</strong>
+                <p class="muted">Weakest subject right now</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="metrics">
+    <div class="metric info">
+        <span class="metric-label">ERP ID</span>
+        <strong>{{ student.erp_id }}</strong>
+    </div>
+    <div class="metric success">
+        <span class="metric-label">Overall Attendance</span>
+        <strong>{{ analytics.overall_attendance }}%</strong>
+    </div>
+    <div class="metric">
+        <span class="metric-label">Minimum Required</span>
+        <strong>{{ analytics.attendance_overview.min_attendance }}%</strong>
+    </div>
+    <div class="metric {% if risk_prediction.label == 'High' %}danger{% elif risk_prediction.label == 'Medium' %}warning{% else %}info{% endif %}">
+        <span class="metric-label">Risk Indicator</span>
+        <strong>{{ risk_prediction.label }}</strong>
+    </div>
+    <div class="metric">
+        <span class="metric-label">Risk Score</span>
+        <strong>{{ (risk_prediction.risk_score * 100)|round(1) }}%</strong>
+    </div>
+    <div class="metric">
+        <span class="metric-label">Stored Face Embeddings</span>
+        <strong>{{ embedding_count }}</strong>
+    </div>
+</section>
+
+<section class="grid-two">
+    <div class="card">
+        <h2>Profile and Attendance Health</h2>
+        <p><strong>{{ student.name }}</strong></p>
+        <p>{{ student.course }} | {{ student.branch }}</p>
+        <p>Year {{ student.year }}, Semester {{ student.semester }}, Section {{ student.section }}</p>
+        <p>Roll Number: {{ student.roll_no }}</p>
+        <div class="progress-card">
+            <div class="progress-copy">
+                <span>Overall attendance</span>
+                <strong>{{ analytics.overall_attendance }}%</strong>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" style="width: {{ analytics.overall_attendance }}%"></div>
+            </div>
+        </div>
+        <div class="note-grid compact-grid">
+            <div class="note-card">
+                <strong>{{ analytics.attendance_overview.total_present_classes }}</strong>
+                <p class="muted">Present classes</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ analytics.attendance_overview.total_unmarked_classes }}</strong>
+                <p class="muted">Unmarked scheduled classes</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ analytics.attendance_overview.total_missed_classes }}</strong>
+                <p class="muted">Classes currently missed</p>
+            </div>
+            <div class="note-card">
+                <strong>{{ student.email or '-' }}</strong>
+                <p class="muted">Registered email</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Risk Summary</h2>
+        <p><span class="pill {% if risk_prediction.label == 'High' %}danger{% elif risk_prediction.label == 'Medium' %}warning{% else %}success{% endif %}">{{ risk_prediction.label }}</span></p>
+        <p><strong>Attendance Input:</strong> {{ risk_prediction.features.attendance_percentage|round(2) }}%</p>
+        <p><strong>CGPA Input:</strong> {{ risk_prediction.features.cgpa|round(2) }}</p>
+        <p><strong>Assignments Input:</strong> {{ risk_prediction.features.assignments_percentage|round(2) }}%</p>
+        <p class="muted">{{ risk_prediction.message }}</p>
+        <div class="progress-card">
+            <div class="progress-copy">
+                <span>Risk intensity</span>
+                <strong>{{ (risk_prediction.risk_score * 100)|round(1) }}%</strong>
+            </div>
+            <div class="progress">
+                <div class="progress-bar risk-bar {% if risk_prediction.label == 'High' %}danger{% elif risk_prediction.label == 'Medium' %}warning{% endif %}" style="width: {{ (risk_prediction.risk_score * 100)|round(1) }}%"></div>
+            </div>
+        </div>
+        <div class="progress-card">
+            <strong>Recovery note</strong>
+            {% if analytics.attendance_overview.required_classes > 0 %}
+            <p class="muted">Threshold recover karne ke liye kam se kam {{ analytics.attendance_overview.required_classes }} aur classes consistently attend karni hongi.</p>
+            {% else %}
+            <p class="muted">Aap currently required attendance threshold par ya uske upar ho.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="grid-two">
+    <div class="card">
+        <h2>Attendance Trend</h2>
+        {% if analytics.subject_percentages %}
+        <div class="chart-shell">
+            <canvas id="studentAttendanceChart"></canvas>
+        </div>
+        {% else %}
+        <p class="muted">Attendance trend pehla attendance mark hone ke baad automatically show hoga.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Risk Breakdown</h2>
+        {% if risk_prediction.label != 'Unknown' or risk_prediction.risk_score > 0 %}
+        <div class="chart-shell">
+            <canvas id="studentRiskChart"></canvas>
+        </div>
+        {% else %}
+        <p class="muted">Risk chart tab active hoga jab prediction ke liye attendance data mil jayega.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="grid-two">
+    <div class="card" id="subject-attendance">
+        <h2>Subject-Wise Attendance</h2>
+        <div class="table-shell">
+            <table>
+                <tr><th>Subject</th><th>Code</th><th>Present</th><th>Total</th><th>%</th><th>Required</th><th>Status</th></tr>
+                {% for subject in analytics.subject_percentages %}
+                <tr>
+                    <td>{{ subject.subject_name }}</td>
+                    <td>{{ subject.subject_code }}</td>
+                    <td>{{ subject.present_classes }}</td>
+                    <td>{{ subject.total_classes }}</td>
+                    <td>{{ subject.percentage }}</td>
+                    <td>{{ subject.min_attendance }}</td>
+                    <td>
+                        {% if subject.total_classes == 0 %}
+                        <span class="pill">No Data</span>
+                        {% elif subject.percentage < subject.min_attendance %}
+                        <span class="pill warning">Below Threshold</span>
+                        {% else %}
+                        <span class="pill success">On Track</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="muted">No attendance records yet.</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <div class="card" id="student-alerts">
+        <h2>Alerts</h2>
+        <div class="table-shell">
+            <table>
+                <tr><th>Date</th><th>Type</th><th>Message</th></tr>
+                {% for alert in analytics.alerts %}
+                <tr>
+                    <td>{{ alert.created_at }}</td>
+                    <td>{{ alert.alert_type }}</td>
+                    <td>{{ alert.message }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="muted">No alerts right now.</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Action Guidance</h2>
+    <div class="note-grid compact-grid">
+        <div class="note-card">
+            <strong>Track weakest subject</strong>
+            <p class="muted">{{ analytics.attendance_overview.weakest_subject.subject_name ~ ' (' ~ analytics.attendance_overview.weakest_subject.subject_code ~ ')' if analytics.attendance_overview.weakest_subject else 'Weakest subject will appear after attendance data is available.' }}</p>
+        </div>
+        <div class="note-card">
+            <strong>Keep profile updated</strong>
+            <p class="muted">Recovery email and phone update karne ke liye account settings ka use karein.</p>
+        </div>
+        <div class="note-card">
+            <strong>Stay above threshold</strong>
+            <p class="muted">Minimum required attendance is {{ analytics.attendance_overview.min_attendance }}% across scheduled lectures.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+const studentAttendanceLabels = {{ analytics.subject_percentages | map(attribute='subject_code') | list | tojson }};
+const studentAttendanceValues = {{ analytics.subject_percentages | map(attribute='percentage') | list | tojson }};
+const riskScore = {{ (risk_prediction.risk_score * 100)|round(2) | tojson }};
+const safeScore = Math.max(0, 100 - riskScore);
+
+if (typeof Chart !== 'undefined' && document.getElementById('studentAttendanceChart')) {
+    new Chart(document.getElementById('studentAttendanceChart'), {
+        type: 'bar',
+        data: {
+            labels: studentAttendanceLabels,
+            datasets: [{
+                label: 'Attendance %',
+                data: studentAttendanceValues,
+                backgroundColor: ['#0f766e', '#1d8f7f', '#3aa797', '#7dbdaf', '#9bd5ca'],
+                borderRadius: 12
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100 } }
+        }
+    });
+}
+
+if (typeof Chart !== 'undefined' && document.getElementById('studentRiskChart')) {
+    new Chart(document.getElementById('studentRiskChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Risk', 'Stable'],
+            datasets: [{
+                data: [riskScore, safeScore],
+                backgroundColor: ['#c14438', '#0f766e'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%'
+        }
+    });
+}
+</script>
+{% endblock %}

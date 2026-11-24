@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Home | EduVision AI{% endblock %}
+{% block body_class %}home-page{% endblock %}
+{% block content %}
+<section class="welcome-overlay" id="welcomeOverlay" aria-hidden="true">
+    <div class="welcome-shell">
+        <img class="welcome-logo" src="{{ url_for('static', filename='eduvision-ai-banner.png') }}" alt="EduVision AI logo">
+        <p class="welcome-copy">Welcome to EduVision AI</p>
+        <p class="welcome-note">Smart face attendance and live academic insights for a modern digital campus.</p>
+    </div>
+</section>
+
+<section class="hero hero-split home-hero">
+    <div class="hero-copy">
+        <p class="eyebrow">Next-Gen Attendance Intelligence</p>
+        <h2>EduVision AI turns attendance into a futuristic digital command center.</h2>
+        <p class="muted hero-lead">Built for students, teachers, HODs, and admins, the platform combines face-enabled attendance, academic visibility, and polished role-based workflows in one memorable interface.</p>
+        <div class="hero-actions role-button-grid">
+            <a class="button-link" href="{{ url_for('auth.login', role='student') }}">Student Login</a>
+            <a class="button-link" href="{{ url_for('auth.login', role='teacher') }}">Teacher Login</a>
+            <a class="button-link" href="{{ url_for('auth.login', role='hod') }}">HOD Login</a>
+            <a class="button-link" href="{{ url_for('auth.login', role='admin') }}">Admin Login</a>
+        </div>
+        <div class="action-row">
+            <a class="button-link secondary" href="{{ url_for('signup.student_signup') }}">Student Signup</a>
+            <a class="button-link secondary" href="{{ url_for('auth.forgot_password') }}">Forgot Password</a>
+        </div>
+        <div class="hero-strip">
+            <div class="hero-strip-item">
+                <span>Identity Layer</span>
+                <strong>Face Recognition Ready</strong>
+            </div>
+            <div class="hero-strip-item">
+                <span>System Feel</span>
+                <strong>Digital, Clean, Judge-Ready</strong>
+            </div>
+            <div class="hero-strip-item">
+                <span>Access Model</span>
+                <strong>4 Live Role Portals</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-panel showcase-panel">
+        <div class="showcase-logo-card">
+            <img class="showcase-logo" src="{{ url_for('static', filename='eduvision-ai-banner.png') }}" alt="EduVision AI logo showcase">
+        </div>
+        <p class="muted showcase-caption">A clean AI-first identity made for demos, judges, and polished project presentations.</p>
+        <div class="signal-grid">
+            <article class="signal-card">
+                <span class="signal-label">System Mode</span>
+                <strong>Live Digital Campus</strong>
+                <p class="muted">Secure role-aware routing keeps every user in the correct workspace.</p>
+            </article>
+            <article class="signal-card">
+                <span class="signal-label">Tracking Core</span>
+                <strong>Attendance + Insights</strong>
+                <p class="muted">Capture records, monitor trends, and surface risk in one flow.</p>
+            </article>
+            <article class="signal-card">
+                <span class="signal-label">Experience</span>
+                <strong>Premium First Impression</strong>
+                <p class="muted">A polished visual layer for demos, reviews, and project judging.</p>
+            </article>
+            <article class="signal-card">
+                <span class="signal-label">Campus Reach</span>
+                <strong>Student to Admin</strong>
+                <p class="muted">Every portal shares one connected system with distinct responsibilities.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="metrics">
+    <div class="metric">
+        <span class="metric-label">Active Portals</span>
+        <strong>4</strong>
+    </div>
+    <div class="metric info">
+        <span class="metric-label">Entry Style</span>
+        <strong>Secure Digital Gateway</strong>
+    </div>
+    <div class="metric success">
+        <span class="metric-label">Core Engine</span>
+        <strong>Vision + Analytics</strong>
+    </div>
+    <div class="metric warning">
+        <span class="metric-label">Public Access</span>
+        <strong>Login, Signup, Recovery</strong>
+    </div>
+</section>
+
+<section class="card">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Why It Stands Out</p>
+            <h2>A sharper first impression for EduVision AI</h2>
+        </div>
+        <p class="muted">The landing experience now leads with your logo, your name, and a cleaner futuristic visual language across the platform.</p>
+    </div>
+    <div class="note-grid compact-grid">
+        <div class="note-card">
+            <strong>Branded Welcome Screen</strong>
+            <p class="muted">Visitors land on a cinematic intro experience before entering the platform.</p>
+        </div>
+        <div class="note-card">
+            <strong>Digital Glass UI</strong>
+            <p class="muted">Cyan glow, layered gradients, and sleek card styling create a more premium look.</p>
+        </div>
+        <div class="note-card">
+            <strong>Logo-Led Identity</strong>
+            <p class="muted">EduVision AI branding now replaces the previous attendance-system naming in the main UI.</p>
+        </div>
+        <div class="note-card">
+            <strong>Demo-Friendly Flow</strong>
+            <p class="muted">Clear role entry points make the experience easier to present during judging and review.</p>
+        </div>
+    </div>
+</section>
+
+<section class="card">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Role-Based Entry</p>
+            <h2>Launch the right portal instantly</h2>
+        </div>
+        <p class="muted">Each button opens the same secure authentication flow with the correct role already selected.</p>
+    </div>
+    <div class="role-grid">
+        <article class="portal-card">
+            <span class="pill">Student</span>
+            <h3>Student Portal</h3>
+            <p class="muted">View attendance percentage, subject-level records, alerts, and AI-based risk visibility.</p>
+            <a class="button-link" href="{{ url_for('auth.login', role='student') }}">Open Student Login</a>
+        </article>
+        <article class="portal-card">
+            <span class="pill">Teacher</span>
+            <h3>Teacher Portal</h3>
+            <p class="muted">Process uploaded attendance media, launch live capture, and manage classroom tracking.</p>
+            <a class="button-link" href="{{ url_for('auth.login', role='teacher') }}">Open Teacher Login</a>
+        </article>
+        <article class="portal-card">
+            <span class="pill warning">HOD</span>
+            <h3>HOD Portal</h3>
+            <p class="muted">Monitor departmental risk, attendance performance, and academic recovery actions.</p>
+            <a class="button-link" href="{{ url_for('auth.login', role='hod') }}">Open HOD Login</a>
+        </article>
+        <article class="portal-card">
+            <span class="pill danger">Admin</span>
+            <h3>Admin Portal</h3>
+            <p class="muted">Control students, teachers, timetables, subjects, policies, and calendar operations centrally.</p>
+            <a class="button-link" href="{{ url_for('auth.login', role='admin') }}">Open Admin Login</a>
+        </article>
+    </div>
+</section>
+
+<section class="grid-three">
+    <div class="card">
+        <h2>Face-Enabled Attendance</h2>
+        <p class="muted">Teacher workflows can still use uploaded media and live camera attendance while keeping the existing backend logic intact.</p>
+    </div>
+    <div class="card">
+        <h2>Predictive Insight Layer</h2>
+        <p class="muted">Students and HOD dashboards continue to surface low-attendance signals and recovery gaps through the analytics layer.</p>
+    </div>
+    <div class="card">
+        <h2>Connected Operations</h2>
+        <p class="muted">Admins configure the academic structure once, and every portal stays synchronized through the same shared data flow.</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    const overlay = document.getElementById("welcomeOverlay");
+    if (!overlay) {
+        return;
+    }
+
+    let timerId = null;
+
+    const dismissOverlay = () => {
+        overlay.classList.add("is-hidden");
+        overlay.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("welcome-active");
+        if (timerId) {
+            window.clearTimeout(timerId);
+        }
+        window.removeEventListener("keydown", handleKeyDown);
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === "Escape") {
+            dismissOverlay();
+        }
+    };
+
+    document.body.classList.add("welcome-active");
+    overlay.setAttribute("aria-hidden", "false");
+    timerId = window.setTimeout(dismissOverlay, 3000);
+    window.addEventListener("keydown", handleKeyDown);
+    overlay.addEventListener("click", dismissOverlay);
+})();
+</script>
+{% endblock %}
